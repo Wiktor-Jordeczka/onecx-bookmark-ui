@@ -1,7 +1,6 @@
 import { APP_INITIALIZER, Component, Inject, Input } from '@angular/core'
 import { CommonModule } from '@angular/common'
-import { HttpClient } from '@angular/common/http'
-import { TranslateLoader, TranslateModule, TranslateService } from '@ngx-translate/core'
+import { TranslateModule, TranslateService } from '@ngx-translate/core'
 import { PrimeIcons } from 'primeng/api'
 import { RippleModule } from 'primeng/ripple'
 import { DynamicDialogModule } from 'primeng/dynamicdialog'
@@ -21,7 +20,6 @@ import {
 } from 'rxjs'
 
 import { AngularAuthModule } from '@onecx/angular-auth'
-import { createRemoteComponentTranslateLoader } from '@onecx/angular-accelerator'
 import {
   AppConfigService,
   AppStateService,
@@ -34,7 +32,6 @@ import {
   BASE_URL,
   ocxRemoteComponent,
   ocxRemoteWebcomponent,
-  provideTranslateServiceForRoot,
   RemoteComponentConfig,
   SLOT_SERVICE,
   SlotService
@@ -76,14 +73,6 @@ export function slotInitializer(slotService: SlotService) {
       provide: BASE_URL,
       useValue: new ReplaySubject<string>(1)
     },
-    provideTranslateServiceForRoot({
-      isolate: true,
-      loader: {
-        provide: TranslateLoader,
-        useFactory: createRemoteComponentTranslateLoader,
-        deps: [HttpClient, BASE_URL]
-      }
-    }),
     {
       provide: APP_INITIALIZER,
       useFactory: slotInitializer,

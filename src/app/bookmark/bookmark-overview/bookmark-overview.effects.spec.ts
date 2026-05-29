@@ -63,7 +63,10 @@ describe('BookmarkOverviewEffects', () => {
   describe('search$', () => {
     it('should dispatch bookmarkSearchResultsReceived on success', (done) => {
       bookmarksServiceMock.searchBookmarksByCriteria.mockReturnValue(
-        of({ stream: [{ id: '1', position: 0, scope: 'PRIVATE' as any, workspaceName: 'ws', displayName: 'B1' }], totalElements: 1 }) as any
+        of({
+          stream: [{ id: '1', position: 0, scope: 'PRIVATE' as any, workspaceName: 'ws', displayName: 'B1' }],
+          totalElements: 1
+        }) as any
       )
 
       actions$.next(BookmarkOverviewActions.search())
@@ -157,8 +160,7 @@ describe('BookmarkOverviewEffects', () => {
 
       effects.navigate$.subscribe()
 
-      expect(routerMock.navigate).toHaveBeenCalledWith(['configure'], { relativeTo: route }
-      )
+      expect(routerMock.navigate).toHaveBeenCalledWith(['configure'], { relativeTo: route })
     })
   })
 
@@ -202,9 +204,7 @@ describe('BookmarkOverviewEffects', () => {
 
       effects.displayError$.subscribe()
 
-      expect(messageServiceMock.error).toHaveBeenCalledWith(
-        expect.objectContaining({ detailKey: undefined })
-      )
+      expect(messageServiceMock.error).toHaveBeenCalledWith(expect.objectContaining({ detailKey: undefined }))
     })
 
     it('should pass undefined as detailKey when errorText is undefined', () => {
@@ -218,9 +218,7 @@ describe('BookmarkOverviewEffects', () => {
 
       effects.displayError$.subscribe()
 
-      expect(messageServiceMock.error).toHaveBeenCalledWith(
-        expect.objectContaining({ detailKey: undefined })
-      )
+      expect(messageServiceMock.error).toHaveBeenCalledWith(expect.objectContaining({ detailKey: undefined }))
     })
 
     it('should not call messageService.error for unrelated actions', () => {

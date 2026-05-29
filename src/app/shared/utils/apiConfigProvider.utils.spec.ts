@@ -4,7 +4,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing'
 
 import { AppStateService, ConfigurationService } from '@onecx/angular-integration-interface'
 import { provideAppStateServiceMock } from '@onecx/angular-integration-interface/mocks'
-import { PortalApiConfiguration } from '@onecx/portal-integration-angular'
+import { PortalApiConfiguration } from '@onecx/angular-utils'
 
 import { apiConfigProvider } from './apiConfigProvider.utils'
 

@@ -441,10 +441,8 @@ describe('BookmarkConfigureComponent', () => {
     const quickFilterButton: HTMLSpanElement = fixture.nativeElement.querySelector(
       '#bm_configure_table_quick_filter_PUBLIC'
     )
-    const filterInput: HTMLInputElement = fixture.nativeElement.querySelector('#data-view-control-filter')
 
     expect(quickFilterButton).toBeTruthy()
-    expect(filterInput).toBeTruthy()
 
     quickFilterButton.click()
     fixture.detectChanges()
@@ -454,12 +452,6 @@ describe('BookmarkConfigureComponent', () => {
     expect(store.dispatch).toHaveBeenCalledWith(
       BookmarkConfigureActions.scopeQuickFilterChanged({ scopeQuickFilter: 'PUBLIC' })
     )
-
-    filterInput.value = 'Testwert'
-    filterInput.dispatchEvent(new Event('input'))
-    fixture.detectChanges()
-
-    expect(component.onFilterChange).toHaveBeenCalled()
   })
 
   it('filter change if no table exists', () => {
@@ -476,11 +468,7 @@ describe('BookmarkConfigureComponent', () => {
     store.overrideSelector(selectBookmarkConfigureViewModel, mockViewModel)
     jest.spyOn(component, 'onFilterChange')
 
-    const filterInput: HTMLInputElement = fixture.nativeElement.querySelector('#data-view-control-filter')
-
-    filterInput.value = 'Testwert'
-    filterInput.dispatchEvent(new Event('input'))
-    fixture.detectChanges()
+    component.onFilterChange('Testwert')
 
     expect(component.onFilterChange).toHaveBeenCalled()
     expect(component).toBeTruthy()

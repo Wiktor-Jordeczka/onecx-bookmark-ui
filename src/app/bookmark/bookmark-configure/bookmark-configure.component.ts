@@ -1,22 +1,29 @@
 import { Component, Inject, LOCALE_ID, OnInit, ViewChild } from '@angular/core'
 import { ActivatedRoute, Router } from '@angular/router'
 import { TranslateService } from '@ngx-translate/core'
-import { Observable, map } from 'rxjs'
+import { Observable } from 'rxjs'
 import { Store } from '@ngrx/store'
 import { PrimeIcons, SelectItem } from 'primeng/api'
 import { Table } from 'primeng/table'
 
 import { UserService, WorkspaceService } from '@onecx/angular-integration-interface'
-import { Action, DataAction } from '@onecx/angular-accelerator'
-import { Column, DataSortDirection, DataViewControlTranslations } from '@onecx/portal-integration-angular'
+import {
+  Action,
+  ColumnType,
+  DataAction,
+  DataSortDirection,
+  DataTableColumn,
+  Filter,
+  Sort
+} from '@onecx/angular-accelerator'
 
 import { Bookmark, BookmarkScope } from 'src/app/shared/generated'
 import { limitText } from 'src/app/shared/utils/utils'
 
 import { BookmarkConfigureActions } from './bookmark-configure.actions'
+import { bookmarkColumns, ExtendedColumn } from './bookmark-configure.columns'
 import { BookmarkConfigureViewModel } from './bookmark-configure.viewmodel'
 import { selectBookmarkConfigureViewModel } from './bookmark-configure.selectors'
-import { bookmarkColumns } from './bookmark-configure.columns'
 
 export type ExtendedSelectItem = SelectItem & { title_key: string }
 
@@ -32,14 +39,17 @@ export class BookmarkConfigureComponent implements OnInit {
   public pageActions: Action[] = []
   public rowActions: DataAction[] = []
   public defaultSortDirection = DataSortDirection.ASCENDING
-  public filteredColumns: Column[] = []
+  public sortField = 'position'
+  public tableFilters: Filter[] = []
+  public interactiveColumns: DataTableColumn[] = []
+  public displayedColumnKeys: string[] = []
+  public filteredColumns: ExtendedColumn[] = []
   public bookmarkColumns = bookmarkColumns
   public limitText = limitText
   public editable = false
   public quickFilterItems$: Observable<SelectItem[]> | undefined
 
   @ViewChild('dataTable', { static: false }) dataTable: Table | undefined
-  public dataViewControlsTranslations$: Observable<DataViewControlTranslations> | undefined
   public quickFilterOptions: ExtendedSelectItem[] = [
     { label: 'BOOKMARK.SCOPES.PRIVATE', title_key: 'BOOKMARK.SCOPES.TOOLTIPS.PRIVATE', value: 'PRIVATE' },
     { label: 'BOOKMARK.SCOPES.PUBLIC', title_key: 'BOOKMARK.SCOPES.TOOLTIPS.PUBLIC', value: 'PUBLIC' }
@@ -57,6 +67,7 @@ export class BookmarkConfigureComponent implements OnInit {
   ) {
     this.editable = this.user.hasPermission('BOOKMARK#EDIT') || this.user.hasPermission('BOOKMARK#ADMIN_EDIT')
     this.filteredColumns = bookmarkColumns.filter((a) => a.active === true)
+    this.syncInteractiveColumns()
     this.viewModel$.subscribe({
       next: (vm) => {
         const a = vm.results.filter((b) => b['scope'] === this.quickFilterValue)
@@ -66,7 +77,6 @@ export class BookmarkConfigureComponent implements OnInit {
   }
 
   public ngOnInit() {
-    this.prepareDialogTranslations()
     this.onSearch()
   }
 
@@ -86,18 +96,6 @@ export class BookmarkConfigureComponent implements OnInit {
     )
   }
 
-  private prepareDialogTranslations(): void {
-    this.dataViewControlsTranslations$ = this.translate
-      .get(['DIALOG.DATAVIEW.FILTER', 'DIALOG.DATAVIEW.FILTER_BY', 'BOOKMARK.DISPLAY_NAME'])
-      .pipe(
-        map((data) => {
-          return {
-            filterInputPlaceholder: data['DIALOG.DATAVIEW.FILTER'],
-            filterInputTooltip: data['DIALOG.DATAVIEW.FILTER_BY'] + data['BOOKMARK.DISPLAY_NAME']
-          } as DataViewControlTranslations
-        })
-      )
-  }
   private preparePageActions(dataExists: boolean, scope: BookmarkScope): Action[] {
     const perm = 'BOOKMARK#' + (scope === BookmarkScope.Public ? 'ADMIN_' : '') + 'EDIT'
     return [
@@ -167,13 +165,27 @@ export class BookmarkConfigureComponent implements OnInit {
   }
 
   public onColumnsChange(activeIds: string[]): void {
-    this.filteredColumns = activeIds.map((id) => bookmarkColumns.find((col) => col.field === id)) as Column[]
+    this.filteredColumns = activeIds.map((id) => bookmarkColumns.find((col) => col.field === id)) as ExtendedColumn[]
+    this.syncInteractiveColumns()
   }
   public onQuickFilterChange(scopeQuickFilter: string): void {
     this.store.dispatch(BookmarkConfigureActions.scopeQuickFilterChanged({ scopeQuickFilter: scopeQuickFilter }))
   }
-  public onFilterChange(event: string): void {
-    this.dataTable?.filterGlobal(event, 'contains')
+  public onFilterChange(event: string | Filter[]): void {
+    if (typeof event === 'string') {
+      this.dataTable?.filterGlobal(event, 'contains')
+      return
+    }
+    this.tableFilters = event
+  }
+  public onSortChange(event: Sort): void {
+    this.sortField = event.sortColumn
+    this.defaultSortDirection = event.sortDirection
+  }
+  public onDataViewChange(layout: 'list' | 'grid' | 'table'): void {
+    if (layout !== 'table') {
+      return
+    }
   }
 
   public onToggleDisable(data: Bookmark): void {
@@ -213,5 +225,16 @@ export class BookmarkConfigureComponent implements OnInit {
     if (!url) return ''
     const q = new URLSearchParams(b.query).toString()
     return url + (q ? '?' + q : '') + (b.fragment ? '#' + b.fragment : '')
+  }
+
+  private syncInteractiveColumns(): void {
+    this.interactiveColumns = this.filteredColumns.map((column) => ({
+      id: column.field,
+      nameKey: `${column.translationPrefix}.${column.header}`,
+      columnType: ColumnType.STRING,
+      sortable: !!column.sort,
+      filterable: !!column.hasFilter
+    }))
+    this.displayedColumnKeys = this.interactiveColumns.map((column) => column.id)
   }
 }

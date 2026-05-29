@@ -1,7 +1,6 @@
 import { APP_INITIALIZER, Component, Inject, Input } from '@angular/core'
 import { CommonModule } from '@angular/common'
-import { HttpClient } from '@angular/common/http'
-import { TranslateLoader, TranslateModule, TranslateService } from '@ngx-translate/core'
+import { TranslateModule, TranslateService } from '@ngx-translate/core'
 import { BehaviorSubject, ReplaySubject } from 'rxjs'
 import { TabViewModule } from 'primeng/tabview'
 
@@ -11,14 +10,12 @@ import {
   BASE_URL,
   ocxRemoteComponent,
   ocxRemoteWebcomponent,
-  provideTranslateServiceForRoot,
   RemoteComponentConfig,
   SLOT_SERVICE,
   SlotService
 } from '@onecx/angular-remote-components'
 
 import { AppConfigService, PortalMessageService, UserService } from '@onecx/angular-integration-interface'
-import { createRemoteComponentTranslateLoader } from '@onecx/angular-accelerator'
 import { PortalCoreModule } from '@onecx/portal-integration-angular'
 
 import { Bookmark, BookmarkScope } from 'src/app/shared/generated'
@@ -46,14 +43,6 @@ export function slotInitializer(slotService: SlotService) {
       provide: BASE_URL,
       useValue: new ReplaySubject<string>(1)
     },
-    provideTranslateServiceForRoot({
-      isolate: true,
-      loader: {
-        provide: TranslateLoader,
-        useFactory: createRemoteComponentTranslateLoader,
-        deps: [HttpClient, BASE_URL]
-      }
-    }),
     {
       provide: APP_INITIALIZER,
       useFactory: slotInitializer,

@@ -1,13 +1,17 @@
 import { APP_INITIALIZER, importProvidersFrom } from '@angular/core'
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http'
+import { HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http'
 import { BrowserModule } from '@angular/platform-browser'
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations'
 import { provideRouter } from '@angular/router'
+import { TranslateLoader, MissingTranslationHandler } from '@ngx-translate/core'
 
 import { AngularAuthModule } from '@onecx/angular-auth'
 import { bootstrapRemoteComponent } from '@onecx/angular-webcomponents'
 import { UserService } from '@onecx/angular-integration-interface'
 import { providePortalDialogService } from '@onecx/portal-integration-angular'
+import { provideTranslationPathFromMeta, createTranslateLoader } from '@onecx/angular-utils'
+import { provideTranslateServiceForRoot } from '@onecx/angular-remote-components'
+import { AngularAcceleratorMissingTranslationHandler } from '@onecx/angular-accelerator'
 
 import { environment } from 'src/environments/environment'
 import { OneCXBookmarkListComponent } from './bookmark-list.component'
@@ -28,6 +32,19 @@ bootstrapRemoteComponent(OneCXBookmarkListComponent, 'ocx-bookmark-list-componen
       children: []
     }
   ]),
+  provideTranslationPathFromMeta(import.meta.url, 'assets/i18n/'),
+  provideTranslateServiceForRoot({
+    isolate: true,
+    loader: {
+      provide: TranslateLoader,
+      useFactory: createTranslateLoader,
+      deps: [HttpClient]
+    },
+    missingTranslationHandler: {
+      provide: MissingTranslationHandler,
+      useClass: AngularAcceleratorMissingTranslationHandler
+    }
+  }),
   {
     provide: APP_INITIALIZER,
     useFactory: userProfileInitializer,

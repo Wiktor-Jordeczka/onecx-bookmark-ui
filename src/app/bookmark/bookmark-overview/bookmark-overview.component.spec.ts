@@ -84,7 +84,9 @@ describe('BookmarkOverviewComponent', () => {
     store.overrideSelector(selectBookmarkOverviewViewModel, baseViewModel)
     store.refreshState()
 
-    userServiceMock = TestBed.inject(UserService) as unknown as jest.Mocked<Pick<UserService, 'hasPermission' | 'profile$'>>
+    userServiceMock = TestBed.inject(UserService) as unknown as jest.Mocked<
+      Pick<UserService, 'hasPermission' | 'profile$'>
+    >
     userServiceMock.hasPermission = jest.fn().mockReturnValue(true)
 
     fixture = TestBed.createComponent(BookmarkOverviewComponent)

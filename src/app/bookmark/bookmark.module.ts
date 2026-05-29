@@ -6,6 +6,7 @@ import { EffectsModule } from '@ngrx/effects'
 import { StoreModule } from '@ngrx/store'
 import { DividerModule } from 'primeng/divider'
 
+import { AngularAcceleratorModule } from '@onecx/angular-accelerator'
 import { providePortalDialogService, PortalCoreModule } from '@onecx/portal-integration-angular'
 import { addInitializeModuleGuard } from '@onecx/angular-integration-interface'
 
@@ -39,6 +40,7 @@ import { BookmarkSortComponent } from './bookmark-sort/bookmark-sort.component'
     BookmarkSortComponent
   ],
   imports: [
+    AngularAcceleratorModule,
     CommonModule,
     DividerModule,
     EffectsModule.forFeature([BookmarkConfigureEffects, BookmarkOverviewEffects]),
