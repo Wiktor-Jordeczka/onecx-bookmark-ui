@@ -16,7 +16,13 @@ const config: Config = {
       }
     ]
   },
-  transformIgnorePatterns: ['node_modules/(?!@ngrx|(?!deck.gl)|d3-scale|(?!.*.mjs$))'],
+  transformIgnorePatterns: [
+    'node_modules/(?!.*\\.mjs$|@ngrx|@onecx|deck\\.gl|d3-scale|d3-scale-chromatic|d3-array|d3-color|d3-format|d3-interpolate|d3-time|d3-time-format|internmap)'
+  ],
+  moduleNameMapper: {
+    '^keycloak-js$': '<rootDir>/src/test/mocks/keycloak-js.mock.ts',
+    '^d3-scale-chromatic$': '<rootDir>/src/test/mocks/d3-scale-chromatic.mock.ts'
+  },
   snapshotSerializers: [
     'jest-preset-angular/build/serializers/no-ng-attributes',
     'jest-preset-angular/build/serializers/ng-snapshot',

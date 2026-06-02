@@ -1,13 +1,14 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core'
 
-import { DialogButtonClicked, DialogPrimaryButtonDisabled, DialogResult } from '@onecx/portal-integration-angular'
+import { DialogButtonClicked, DialogPrimaryButtonDisabled, DialogResult } from '@onecx/angular-accelerator'
 
 import { ExportBookmarksRequest, EximBookmarkScope } from 'src/app/shared/generated'
 
 @Component({
   selector: 'app-bookmark-export',
   templateUrl: './bookmark-export.component.html',
-  styleUrl: './bookmark-export.component.scss'
+  styleUrl: './bookmark-export.component.scss',
+  standalone: false
 })
 export class BookmarkExportComponent
   implements

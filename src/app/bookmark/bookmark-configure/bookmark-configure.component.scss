@@ -26,13 +26,13 @@
     }
   }
   // hide unusable stuff
-  ocx-column-group-selection,
-  ocx-interactive-data-view div div button {
-    display: none;
-  }
-  ocx-interactive-data-view div {
-    justify-content: center !important;
-  }
+  // ocx-column-group-selection,
+  // ocx-interactive-data-view div div button {
+  //   display: none;
+  // }
+  // ocx-interactive-data-view div {
+  //   justify-content: center !important;
+  // }
 
   .max-height-for-2-lines {
     max-height: 2.5rem;

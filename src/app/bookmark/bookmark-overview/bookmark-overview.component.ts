@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Inject, LOCALE_ID, OnInit } from '@angular/core'
 import { TranslateService } from '@ngx-translate/core'
-import { BehaviorSubject, Observable, map, of } from 'rxjs'
+import { BehaviorSubject, Observable, map, of, take } from 'rxjs'
 import { Store } from '@ngrx/store'
 import { MenuItem, PrimeIcons } from 'primeng/api'
 
@@ -24,7 +24,8 @@ export type Product = {
 @Component({
   selector: 'app-bookmark-overview',
   templateUrl: './bookmark-overview.component.html',
-  styleUrls: ['./bookmark-overview.component.scss']
+  styleUrls: ['./bookmark-overview.component.scss'],
+  standalone: false
 })
 export class BookmarkOverviewComponent implements OnInit {
   // data
@@ -54,11 +55,13 @@ export class BookmarkOverviewComponent implements OnInit {
   ) {
     this.user$ = this.user.profile$.asObservable()
     this.isProductComponentDefined$ = this.slotService.isSomeComponentDefinedForSlot(this.slotName)
-    this.hasEditPermissions = this.user.hasPermission('BOOKMARK#EDIT') ?? this.user.hasPermission('BOOKMARK#ADMIN_EDIT')
   }
 
   public ngOnInit() {
-    this.workspace = this.appStateService.currentWorkspace$.getValue()
+    this.appStateService.currentWorkspace$.pipe(take(1)).subscribe((workspace) => {
+      this.workspace = workspace
+    })
+    void this.loadPermissions()
     this.productsEmitter.subscribe(this.products$)
     this.prepareDockItems()
     this.onSearch()
@@ -81,7 +84,7 @@ export class BookmarkOverviewComponent implements OnInit {
               tooltipEvent: 'hover'
             },
             routerLink: 'configure'
-          } as MenuItem
+          }
         ]
       })
     )
@@ -98,5 +101,13 @@ export class BookmarkOverviewComponent implements OnInit {
   }
   public onGoToConfigure() {
     this.store.dispatch(BookmarkOverviewActions.navigate({ path: ['configure'] }))
+  }
+
+  private async loadPermissions(): Promise<void> {
+    const [canEdit, canAdminEdit] = await Promise.all([
+      this.user.hasPermission('BOOKMARK#EDIT'),
+      this.user.hasPermission('BOOKMARK#ADMIN_EDIT')
+    ])
+    this.hasEditPermissions = canEdit || canAdminEdit
   }
 }

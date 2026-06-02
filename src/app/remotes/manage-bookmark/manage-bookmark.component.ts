@@ -1,10 +1,12 @@
-import { APP_INITIALIZER, Component, Inject, Input } from '@angular/core'
+import { Component, Inject, Input, APP_INITIALIZER } from '@angular/core'
 import { CommonModule } from '@angular/common'
 import { TranslateModule, TranslateService } from '@ngx-translate/core'
 import { PrimeIcons } from 'primeng/api'
 import { RippleModule } from 'primeng/ripple'
 import { DynamicDialogModule } from 'primeng/dynamicdialog'
 import { ProgressSpinnerModule } from 'primeng/progressspinner'
+import { ButtonModule } from 'primeng/button'
+import { TooltipModule } from 'primeng/tooltip'
 import {
   BehaviorSubject,
   catchError,
@@ -29,20 +31,19 @@ import {
 import { Endpoint, MfeInfo, PageInfo, Workspace } from '@onecx/integration-interface'
 import {
   AngularRemoteComponentsModule,
-  BASE_URL,
   ocxRemoteComponent,
   ocxRemoteWebcomponent,
-  RemoteComponentConfig,
   SLOT_SERVICE,
   SlotService
 } from '@onecx/angular-remote-components'
+import { REMOTE_COMPONENT_CONFIG, RemoteComponentConfig } from '@onecx/angular-utils'
 import {
   ButtonDialogButtonDetails,
-  PortalCoreModule,
   PortalDialogConfig,
   PortalDialogService,
-  providePortalDialogService
-} from '@onecx/portal-integration-angular'
+  providePortalDialogService,
+  AngularAcceleratorModule
+} from '@onecx/angular-accelerator'
 
 import { Bookmark, CreateBookmark, BookmarkScope, UpdateBookmark } from 'src/app/shared/generated'
 import { extractPathAfter, mapPathSegmentsToPathParameters } from 'src/app/shared/utils/path.utils'
@@ -57,23 +58,26 @@ export function slotInitializer(slotService: SlotService) {
 }
 
 @Component({
-  standalone: true,
   imports: [
     AngularAuthModule,
     AngularRemoteComponentsModule,
     CommonModule,
     RippleModule,
-    PortalCoreModule,
+    AngularAcceleratorModule,
     ProgressSpinnerModule,
+    ButtonModule,
+    TooltipModule,
     TranslateModule,
     DynamicDialogModule
   ],
   providers: [
     {
-      provide: BASE_URL,
-      useValue: new ReplaySubject<string>(1)
+      provide: REMOTE_COMPONENT_CONFIG,
+      useValue: new ReplaySubject<RemoteComponentConfig>(1)
     },
+    // eslint-disable-next-line deprecation/deprecation
     {
+      // eslint-disable-next-line deprecation/deprecation
       provide: APP_INITIALIZER,
       useFactory: slotInitializer,
       deps: [SLOT_SERVICE],
@@ -110,7 +114,7 @@ export class OneCXManageBookmarkComponent implements ocxRemoteComponent, ocxRemo
   }
 
   constructor(
-    @Inject(BASE_URL) private readonly baseUrl: ReplaySubject<string>,
+    @Inject(REMOTE_COMPONENT_CONFIG) private readonly remoteComponentConfig: ReplaySubject<RemoteComponentConfig>,
     private readonly appConfigService: AppConfigService,
     private readonly appStateService: AppStateService,
     private readonly userService: UserService,
@@ -162,7 +166,7 @@ export class OneCXManageBookmarkComponent implements ocxRemoteComponent, ocxRemo
   }
 
   ocxInitRemoteComponent(config: RemoteComponentConfig): void {
-    this.baseUrl.next(config.baseUrl)
+    this.remoteComponentConfig.next(config)
     this.permissions = config.permissions
     this.bookmarkApiUtils.overwriteBaseURL(config.baseUrl)
     this.appConfigService.init(config.baseUrl)

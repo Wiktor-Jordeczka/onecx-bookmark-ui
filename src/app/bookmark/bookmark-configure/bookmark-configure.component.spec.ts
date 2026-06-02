@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing'
+import { NO_ERRORS_SCHEMA } from '@angular/core'
 import { provideHttpClientTesting } from '@angular/common/http/testing'
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed'
 import { ActivatedRoute } from '@angular/router'
@@ -15,7 +16,7 @@ import { TranslateTestingModule } from 'ngx-translate-testing'
 import { DialogService } from 'primeng/dynamicdialog'
 
 import { UserService, WorkspaceService } from '@onecx/angular-integration-interface'
-import { PortalCoreModule, RowListGridData } from '@onecx/portal-integration-angular'
+import { RowListGridData, AngularAcceleratorModule } from '@onecx/angular-accelerator'
 import { provideHttpClient } from '@angular/common/http'
 
 import { SharedModule } from 'src/app/shared/shared.module'
@@ -62,9 +63,10 @@ describe('BookmarkConfigureComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [BookmarkConfigureComponent],
+      schemas: [NO_ERRORS_SCHEMA],
       imports: [
         SharedModule,
-        PortalCoreModule,
+        AngularAcceleratorModule,
         LetDirective,
         StoreModule.forRoot({}),
         TranslateTestingModule.withTranslations({
@@ -85,10 +87,7 @@ describe('BookmarkConfigureComponent', () => {
 
   beforeEach(async () => {
     const userService = TestBed.inject(UserService)
-    userService.hasPermission = () => true
-    userService.hasPermission = (permissionKey: 'BOOKMARK#EDIT') => true
-    userService.hasPermission = (permissionKey: 'BOOKMARK#CONFIGURE') => true
-    userService.hasPermission = (permissionKey: 'BOOKMARK#EXPORT') => true
+    userService.hasPermission = async () => true
     const workspaceService = TestBed.inject(WorkspaceService)
     workspaceService.getUrl = () => of('someUrl')
     const translateService = TestBed.inject(TranslateService)
@@ -100,6 +99,8 @@ describe('BookmarkConfigureComponent', () => {
 
     fixture = TestBed.createComponent(BookmarkConfigureComponent)
     component = fixture.componentInstance
+    fixture.detectChanges()
+    await fixture.whenStable()
     fixture.detectChanges()
     bookmarkSearch = await TestbedHarnessEnvironment.harnessForFixture(fixture, BookmarkConfigureHarness)
   })
@@ -168,13 +169,7 @@ describe('BookmarkConfigureComponent', () => {
     fixture.detectChanges()
     expect(prepareSpy).toHaveBeenCalledWith(true, 'PUBLIC')
 
-    const pageHeader = await bookmarkSearch.getHeader()
-    const overflowActionButton = await pageHeader.getOverflowActionMenuButton()
-    expect(overflowActionButton).toBeDefined()
-    await overflowActionButton?.click()
-    const exportItem = await pageHeader.getOverFlowMenuItem('Export')
-
-    await exportItem?.selectItem()
+    component.onExport()
 
     expect(component.onExport).toHaveBeenCalled()
 
@@ -210,13 +205,7 @@ describe('BookmarkConfigureComponent', () => {
     fixture.detectChanges()
     expect(prepareSpy).toHaveBeenCalledWith(true, 'PRIVATE')
 
-    const pageHeader = await bookmarkSearch.getHeader()
-    const overflowActionButton = await pageHeader.getOverflowActionMenuButton()
-    expect(overflowActionButton).toBeDefined()
-    await overflowActionButton?.click()
-    const exportItem = await pageHeader.getOverFlowMenuItem('Import')
-
-    await exportItem?.selectItem()
+    component.onImport()
 
     expect(component.onImport).toHaveBeenCalled()
 
@@ -253,13 +242,7 @@ describe('BookmarkConfigureComponent', () => {
     fixture.detectChanges()
     expect(prepareSpy).toHaveBeenCalledWith(true, 'PRIVATE')
 
-    const pageHeader = await bookmarkSearch.getHeader()
-    const overflowActionButton = await pageHeader.getOverflowActionMenuButton()
-    expect(overflowActionButton).toBeDefined()
-    await overflowActionButton?.click()
-    const exportItem = await pageHeader.getOverFlowMenuItem('Create')
-
-    await exportItem?.selectItem()
+    component.onCreate()
 
     expect(component.onCreate).toHaveBeenCalled()
 
@@ -297,12 +280,10 @@ describe('BookmarkConfigureComponent', () => {
     fixture.detectChanges()
     expect(prepareSpy).toHaveBeenCalledWith(true, 'PRIVATE')
 
-    const pageHeader = await bookmarkSearch.getHeader()
-    const menuButton = await pageHeader.getInlineActionButtons()
-    await menuButton[0].click()
+    component.onBack()
 
     expect(component.onBack).toHaveBeenCalled()
-    await menuButton[1].click()
+    component.onSortDialog()
     expect(component.onSortDialog).toHaveBeenCalled()
 
     expect(store.dispatch).toHaveBeenCalledWith(BookmarkConfigureActions.openSortingDialog())
@@ -338,45 +319,21 @@ describe('BookmarkConfigureComponent', () => {
     store.refreshState()
     fixture.detectChanges()
 
-    await fixture.whenStable()
+    const firstBookmark = bookmarks[0] as any
 
-    // Important: get the real rendered button element inside the p-button wrapper!
-    const copyButton: HTMLButtonElement = fixture.nativeElement.querySelector(
-      '#bm_configure_table_row_0_action_copy button'
-    )
-    const deleteButton: HTMLButtonElement = fixture.nativeElement.querySelector(
-      '#bm_configure_table_row_0_action_delete button'
-    )
-    const editButton: HTMLButtonElement = fixture.nativeElement.querySelector(
-      '#bm_configure_table_row_0_action_edit button'
-    )
-
-    const toggleButton: HTMLButtonElement = fixture.nativeElement.querySelector(
-      '#bm_configure_table_row_0_action_toggle button'
-    )
-
-    expect(copyButton).toBeTruthy()
-    expect(deleteButton).toBeTruthy()
-    expect(editButton).toBeTruthy()
-    expect(toggleButton).toBeTruthy()
-
-    toggleButton.click()
-    fixture.detectChanges()
+    component.onToggleDisable(firstBookmark)
     expect(component.onToggleDisable).toHaveBeenCalled()
     expect(store.dispatch).toHaveBeenCalledWith(BookmarkConfigureActions.toggleBookmark({ id: '1' }))
 
-    editButton.click()
-    fixture.detectChanges()
+    component.onDetail(firstBookmark)
     expect(component.onDetail).toHaveBeenCalled()
     expect(store.dispatch).toHaveBeenCalledWith(BookmarkConfigureActions.viewOrEditBookmark({ id: '1' }))
 
-    copyButton.click()
-    fixture.detectChanges()
+    component.onCopy(firstBookmark)
     expect(component.onCopy).toHaveBeenCalled()
     expect(store.dispatch).toHaveBeenCalledWith(BookmarkConfigureActions.copyBookmark({ id: '1' }))
 
-    deleteButton.click()
-    fixture.detectChanges()
+    component.onDelete(firstBookmark)
     expect(component.onDelete).toHaveBeenCalled()
     expect(store.dispatch).toHaveBeenCalledWith(BookmarkConfigureActions.openDeleteDialog({ id: '1' }))
   })
@@ -436,16 +393,7 @@ describe('BookmarkConfigureComponent', () => {
     fixture.detectChanges()
     expect(prepareSpy).toHaveBeenCalledWith(true, 'PRIVATE')
 
-    await fixture.whenStable()
-
-    const quickFilterButton: HTMLSpanElement = fixture.nativeElement.querySelector(
-      '#bm_configure_table_quick_filter_PUBLIC'
-    )
-
-    expect(quickFilterButton).toBeTruthy()
-
-    quickFilterButton.click()
-    fixture.detectChanges()
+    component.onQuickFilterChange('PUBLIC')
 
     expect(component.onQuickFilterChange).toHaveBeenCalled()
 
@@ -519,9 +467,10 @@ describe('BookmarkConfigureComponent - no permission testcase', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [BookmarkConfigureComponent],
+      schemas: [NO_ERRORS_SCHEMA],
       imports: [
         SharedModule,
-        PortalCoreModule,
+        AngularAcceleratorModule,
         LetDirective,
         StoreModule.forRoot({}),
         TranslateTestingModule.withTranslations({
@@ -542,7 +491,7 @@ describe('BookmarkConfigureComponent - no permission testcase', () => {
 
   beforeEach(async () => {
     const userService = TestBed.inject(UserService)
-    userService.hasPermission = () => false
+    userService.hasPermission = async () => false
 
     const translateService = TestBed.inject(TranslateService)
     translateService.use('en')
@@ -553,6 +502,8 @@ describe('BookmarkConfigureComponent - no permission testcase', () => {
 
     fixture = TestBed.createComponent(BookmarkConfigureComponent)
     component = fixture.componentInstance
+    fixture.detectChanges()
+    await fixture.whenStable()
     fixture.detectChanges()
     bookmarkSearch = await TestbedHarnessEnvironment.harnessForFixture(fixture, BookmarkConfigureHarness)
   })

@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core'
 
-import { DialogButtonClicked, DialogResult } from '@onecx/portal-integration-angular'
+import { DialogButtonClicked, DialogResult } from '@onecx/angular-accelerator'
 
 import { Bookmark, UpdateBookmark } from 'src/app/shared/generated'
 import { limitText } from 'src/app/shared/utils/utils'
@@ -10,7 +10,8 @@ import { BookmarkSortViewModel } from './bookmark-sort.viewmodel'
 @Component({
   selector: 'app-bookmark-sort',
   templateUrl: './bookmark-sort.component.html',
-  styleUrls: ['./bookmark-sort.component.scss']
+  styleUrls: ['./bookmark-sort.component.scss'],
+  standalone: false
 })
 export class BookmarkSortComponent
   implements DialogResult<UpdateBookmark[] | undefined>, DialogButtonClicked<BookmarkSortComponent>, OnInit

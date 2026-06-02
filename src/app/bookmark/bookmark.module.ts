@@ -4,11 +4,19 @@ import { RouterModule } from '@angular/router'
 import { LetDirective } from '@ngrx/component'
 import { EffectsModule } from '@ngrx/effects'
 import { StoreModule } from '@ngrx/store'
+import { ButtonModule } from 'primeng/button'
 import { DividerModule } from 'primeng/divider'
+import { BadgeModule } from 'primeng/badge'
+import { CheckboxModule } from 'primeng/checkbox'
+import { MessageModule } from 'primeng/message'
+import { MessagesModule } from 'primeng/messages'
+import { SelectButtonModule } from 'primeng/selectbutton'
+import { TabViewModule } from 'primeng/tabview'
+import { TableModule } from 'primeng/table'
+import { TooltipModule } from 'primeng/tooltip'
 
-import { AngularAcceleratorModule } from '@onecx/angular-accelerator'
-import { providePortalDialogService, PortalCoreModule } from '@onecx/portal-integration-angular'
-import { addInitializeModuleGuard } from '@onecx/angular-integration-interface'
+import { AngularAcceleratorModule, providePortalDialogService } from '@onecx/angular-accelerator'
+import { providePermissionService, provideThemeConfig, PortalPageComponent } from '@onecx/angular-utils'
 
 import { SharedModule } from 'src/app/shared/shared.module'
 import { bookmarkFeature } from './bookmark.reducers'
@@ -27,7 +35,7 @@ import { BookmarkImageComponent } from './bookmark-image/bookmark-image.componen
 import { BookmarkSortComponent } from './bookmark-sort/bookmark-sort.component'
 
 @NgModule({
-  providers: [providePortalDialogService()],
+  providers: [providePortalDialogService(), provideThemeConfig(), providePermissionService()],
   declarations: [
     BookmarkOverviewComponent,
     BookmarkListComponent,
@@ -41,13 +49,22 @@ import { BookmarkSortComponent } from './bookmark-sort/bookmark-sort.component'
   ],
   imports: [
     AngularAcceleratorModule,
+    BadgeModule,
+    ButtonModule,
+    CheckboxModule,
     CommonModule,
     DividerModule,
+    MessageModule,
+    MessagesModule,
     EffectsModule.forFeature([BookmarkConfigureEffects, BookmarkOverviewEffects]),
     LetDirective,
-    PortalCoreModule.forMicroFrontend(),
-    RouterModule.forChild(addInitializeModuleGuard(routes)),
+    PortalPageComponent,
+    RouterModule.forChild(routes),
+    SelectButtonModule,
     SharedModule,
+    TabViewModule,
+    TableModule,
+    TooltipModule,
     StoreModule.forFeature(bookmarkFeature)
   ]
 })

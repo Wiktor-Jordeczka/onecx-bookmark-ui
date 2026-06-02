@@ -1,3 +1,4 @@
+import { AngularAcceleratorModule } from '@onecx/angular-accelerator'
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { NO_ERRORS_SCHEMA } from '@angular/core'
 import { CommonModule } from '@angular/common'
@@ -7,8 +8,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing'
 import { FormsModule } from '@angular/forms'
 import { TranslateTestingModule } from 'ngx-translate-testing'
 import { FileSelectEvent, FileUpload, FileUploadModule } from 'primeng/fileupload'
-
-import { PortalCoreModule } from '@onecx/portal-integration-angular'
 
 import { BookmarkImportComponent } from './bookmark-import.component'
 import { EximBookmarkScope, EximMode } from 'src/app/shared/generated'
@@ -25,7 +24,7 @@ describe('BookmarkImportComponent', () => {
         CommonModule,
         FormsModule,
         FileUploadModule,
-        PortalCoreModule,
+        AngularAcceleratorModule,
         TranslateTestingModule.withTranslations({
           de: require('./src/assets/i18n/de.json'),
           en: require('./src/assets/i18n/en.json')

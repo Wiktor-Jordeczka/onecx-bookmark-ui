@@ -1,3 +1,4 @@
+import { AngularAcceleratorModule } from '@onecx/angular-accelerator'
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { TestBed } from '@angular/core/testing'
 import { provideHttpClient } from '@angular/common/http'
@@ -9,7 +10,6 @@ import { provideMockActions } from '@ngrx/effects/testing'
 
 import { AppStateService, PortalMessageService, UserService } from '@onecx/angular-integration-interface'
 import { AppStateServiceMock, provideAppStateServiceMock } from '@onecx/angular-integration-interface/mocks'
-import { PortalCoreModule } from '@onecx/portal-integration-angular'
 
 import { BookmarksInternalAPIService } from 'src/app/shared/generated'
 import { BookmarkOverviewActions } from './bookmark-overview.actions'
@@ -33,7 +33,7 @@ describe('BookmarkOverviewEffects', () => {
     await TestBed.configureTestingModule({
       imports: [
         RouterModule.forRoot([]),
-        PortalCoreModule,
+        AngularAcceleratorModule,
         TranslateTestingModule.withTranslations({
           de: require('./src/assets/i18n/de.json'),
           en: require('./src/assets/i18n/en.json')
@@ -56,7 +56,7 @@ describe('BookmarkOverviewEffects', () => {
     await appStateMock.currentWorkspace$.publish({ workspaceName: 'test-ws' } as any)
 
     userServiceMock = TestBed.inject(UserService) as unknown as jest.Mocked<Pick<UserService, 'hasPermission'>>
-    userServiceMock.hasPermission = jest.fn().mockReturnValue(false)
+    userServiceMock.hasPermission = jest.fn().mockResolvedValue(false)
     routerMock = { navigate: jest.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true) } as any
   })
 
@@ -93,7 +93,7 @@ describe('BookmarkOverviewEffects', () => {
     })
 
     it('should not add scope to criteria when user has ADMIN_EDIT permission', (done) => {
-      userServiceMock.hasPermission = jest.fn().mockReturnValue(true)
+      userServiceMock.hasPermission = jest.fn().mockResolvedValue(true)
       bookmarksServiceMock.searchBookmarksByCriteria.mockReturnValue(of({ stream: [], totalElements: 0 }) as any)
 
       actions$.next(BookmarkOverviewActions.search())

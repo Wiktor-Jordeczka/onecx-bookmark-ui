@@ -12,10 +12,20 @@ import { StoreModule } from '@ngrx/store'
 import { StoreDevtoolsModule } from '@ngrx/store-devtools'
 
 import { AngularAuthModule } from '@onecx/angular-auth'
-import { createTranslateLoader, provideTranslationPathFromMeta } from '@onecx/angular-utils'
-import { APP_CONFIG, AppStateService, ConfigurationService } from '@onecx/angular-integration-interface'
-import { AngularAcceleratorMissingTranslationHandler } from '@onecx/angular-accelerator'
-import { PortalCoreModule, providePortalDialogService } from '@onecx/portal-integration-angular'
+import {
+  createTranslateLoader,
+  providePermissionService,
+  provideTranslationPathFromMeta,
+  provideThemeConfig
+} from '@onecx/angular-utils'
+import { APP_CONFIG } from '@onecx/angular-integration-interface'
+import {
+  AngularAcceleratorMissingTranslationHandler,
+  AngularAcceleratorModule,
+  providePortalDialogService
+} from '@onecx/angular-accelerator'
+import { StandaloneShellModule, provideStandaloneProviders } from '@onecx/angular-standalone-shell'
+import { providePrimeNG } from 'primeng/config'
 
 import { Configuration } from './shared/generated'
 import { apiConfigProvider } from './shared/utils/apiConfigProvider.utils'
@@ -35,7 +45,8 @@ import { metaReducers, reducers } from './app.reducers'
     EffectsModule.forRoot([]),
     AngularAuthModule,
     LetDirective,
-    PortalCoreModule.forRoot('onecx-bookmark-ui'),
+    AngularAcceleratorModule,
+    StandaloneShellModule,
     StoreRouterConnectingModule.forRoot(),
     StoreModule.forRoot(reducers, { metaReducers }),
     StoreDevtoolsModule.instrument({
@@ -58,12 +69,15 @@ import { metaReducers, reducers } from './app.reducers'
     { provide: APP_CONFIG, useValue: environment },
     {
       provide: Configuration,
-      useFactory: apiConfigProvider,
-      deps: [ConfigurationService, AppStateService]
+      useFactory: apiConfigProvider
     },
     provideTranslationPathFromMeta(import.meta.url, 'assets/i18n/'),
     provideHttpClient(withInterceptorsFromDi()),
-    providePortalDialogService()
+    providePortalDialogService(),
+    provideStandaloneProviders(),
+    provideThemeConfig(),
+    providePrimeNG({ ripple: true }),
+    providePermissionService()
   ],
   bootstrap: [AppComponent]
 })

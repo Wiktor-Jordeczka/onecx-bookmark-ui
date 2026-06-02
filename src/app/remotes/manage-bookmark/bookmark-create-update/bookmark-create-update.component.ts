@@ -8,7 +8,7 @@ import { InputTextModule } from 'primeng/inputtext'
 import { TooltipModule } from 'primeng/tooltip'
 
 import { UserService } from '@onecx/angular-integration-interface'
-import { DialogButtonClicked, DialogPrimaryButtonDisabled, DialogResult } from '@onecx/portal-integration-angular'
+import { DialogButtonClicked, DialogPrimaryButtonDisabled, DialogResult } from '@onecx/angular-accelerator'
 
 import { Bookmark, BookmarkScope } from 'src/app/shared/generated'
 
@@ -97,10 +97,7 @@ export class BookmarkCreateUpdateComponent
       }
     }
     this.permissionKey = 'BOOKMARK#' + this.vm.mode
-    this.hasPermission = this.hasEditPermission()
-    if (!this.hasPermission || this.isPublicBookmark) {
-      this.formGroup.disable()
-    }
+    void this.syncPermissionState()
 
     // align button status according to form validation
     this.formGroup.statusChanges
@@ -122,10 +119,19 @@ export class BookmarkCreateUpdateComponent
     }, 500)
   }
 
-  private hasEditPermission(): boolean {
+  private async hasEditPermission(): Promise<boolean> {
     if (this.vm.permissions) {
       return this.vm.permissions.includes(this.permissionKey)
     }
     return this.userService.hasPermission(this.permissionKey)
+  }
+
+  private async syncPermissionState(): Promise<void> {
+    this.hasPermission = await this.hasEditPermission()
+    if (!this.hasPermission || this.isPublicBookmark) {
+      this.formGroup.disable()
+    } else {
+      this.formGroup.enable()
+    }
   }
 }

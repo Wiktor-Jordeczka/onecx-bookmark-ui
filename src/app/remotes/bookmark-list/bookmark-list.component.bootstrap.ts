@@ -1,4 +1,4 @@
-import { APP_INITIALIZER, importProvidersFrom } from '@angular/core'
+import { importProvidersFrom, inject, provideAppInitializer } from '@angular/core'
 import { HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http'
 import { BrowserModule } from '@angular/platform-browser'
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations'
@@ -8,10 +8,16 @@ import { TranslateLoader, MissingTranslationHandler } from '@ngx-translate/core'
 import { AngularAuthModule } from '@onecx/angular-auth'
 import { bootstrapRemoteComponent } from '@onecx/angular-webcomponents'
 import { UserService } from '@onecx/angular-integration-interface'
-import { providePortalDialogService } from '@onecx/portal-integration-angular'
-import { provideTranslationPathFromMeta, createTranslateLoader } from '@onecx/angular-utils'
+import { providePortalDialogService } from '@onecx/angular-accelerator'
+import {
+  providePermissionService,
+  provideTranslationPathFromMeta,
+  createTranslateLoader,
+  provideThemeConfig
+} from '@onecx/angular-utils'
 import { provideTranslateServiceForRoot } from '@onecx/angular-remote-components'
 import { AngularAcceleratorMissingTranslationHandler } from '@onecx/angular-accelerator'
+import { providePrimeNG } from 'primeng/config'
 
 import { environment } from 'src/environments/environment'
 import { OneCXBookmarkListComponent } from './bookmark-list.component'
@@ -25,6 +31,9 @@ function userProfileInitializer(userService: UserService) {
 bootstrapRemoteComponent(OneCXBookmarkListComponent, 'ocx-bookmark-list-component', environment.production, [
   provideHttpClient(withInterceptorsFromDi()),
   providePortalDialogService(),
+  provideThemeConfig(),
+  providePermissionService(),
+  providePrimeNG({ ripple: true }),
   importProvidersFrom(AngularAuthModule, BrowserModule, BrowserAnimationsModule),
   provideRouter([
     {
@@ -45,10 +54,8 @@ bootstrapRemoteComponent(OneCXBookmarkListComponent, 'ocx-bookmark-list-componen
       useClass: AngularAcceleratorMissingTranslationHandler
     }
   }),
-  {
-    provide: APP_INITIALIZER,
-    useFactory: userProfileInitializer,
-    deps: [UserService],
-    multi: true
-  }
+  provideAppInitializer(() => {
+    const initializerFn = userProfileInitializer(inject(UserService))
+    return initializerFn()
+  })
 ])

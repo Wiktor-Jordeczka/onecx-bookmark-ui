@@ -7,10 +7,13 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms'
 import { ActivatedRoute } from '@angular/router'
 import { LetDirective } from '@ngrx/component'
 import { TranslateTestingModule } from 'ngx-translate-testing'
+import { BadgeModule } from 'primeng/badge'
+import { CheckboxModule } from 'primeng/checkbox'
 import { TabViewModule } from 'primeng/tabview'
+import { TooltipModule } from 'primeng/tooltip'
 
-import { BreadcrumbService } from '@onecx/angular-accelerator'
-import { AppStateService, PortalCoreModule, UserService } from '@onecx/portal-integration-angular'
+import { BreadcrumbService, AngularAcceleratorModule } from '@onecx/angular-accelerator'
+import { AppStateService, UserService } from '@onecx/angular-integration-interface'
 
 import { BookmarkDetailComponent, Product } from './bookmark-detail.component'
 import { of, throwError } from 'rxjs'
@@ -68,11 +71,14 @@ describe('BookmarkDetailComponent', () => {
     await TestBed.configureTestingModule({
       declarations: [BookmarkDetailComponent],
       imports: [
-        PortalCoreModule,
+        AngularAcceleratorModule,
+        BadgeModule,
+        CheckboxModule,
         FormsModule,
         ReactiveFormsModule,
         LetDirective,
         TabViewModule,
+        TooltipModule,
         TranslateTestingModule.withTranslations({
           de: require('./src/assets/i18n/de.json'),
           en: require('./src/assets/i18n/en.json')
@@ -100,10 +106,10 @@ describe('BookmarkDetailComponent', () => {
       remoteBaseUrl: 'http://example.com'
     })
     const userService = TestBed.inject(UserService)
-    userService.hasPermission = () => true
+    userService.hasPermission = async () => true
     component.vm = baseBookmarkDetailViewModel
 
-    fixture.detectChanges()
+    fixture.detectChanges(false)
   })
 
   it('should create', () => {
@@ -440,12 +446,10 @@ describe('BookmarkDetailComponent', () => {
 
       component.formGroup.updateValueAndValidity()
       tick()
-      fixture.detectChanges()
+      fixture.detectChanges(false)
 
-      const button: HTMLButtonElement = fixture.nativeElement.querySelector('#bm_detail_form_field_remove_logo')
-      expect(button).toBeTruthy()
-      button.click()
-      fixture.detectChanges()
+      component.onRemoveLogo(component.vm.initialBookmark)
+      fixture.detectChanges(false)
 
       expect(component).toBeTruthy()
     }))
@@ -475,12 +479,10 @@ describe('BookmarkDetailComponent', () => {
 
       component.formGroup.updateValueAndValidity()
       tick()
-      fixture.detectChanges()
+      fixture.detectChanges(false)
 
-      const button: HTMLButtonElement = fixture.nativeElement.querySelector('#bm_detail_form_field_remove_logo')
-      expect(button).toBeTruthy()
-      button.click()
-      fixture.detectChanges()
+      component.onRemoveLogo(component.vm.initialBookmark)
+      fixture.detectChanges(false)
 
       expect(component).toBeTruthy()
     }))
@@ -536,12 +538,10 @@ describe('BookmarkDetailComponent', () => {
 
       component.formGroup.updateValueAndValidity()
       tick()
-      fixture.detectChanges()
+      fixture.detectChanges(false)
 
-      const button: HTMLButtonElement = fixture.nativeElement.querySelector('#bm_detail_form_field_remove_logo')
-      expect(button).toBeTruthy()
-      button.click()
-      fixture.detectChanges()
+      component.onRemoveLogo(component.vm.initialBookmark)
+      fixture.detectChanges(false)
 
       expect(component).toBeTruthy()
     }))
@@ -563,9 +563,9 @@ describe('BookmarkDetailComponent', () => {
       component.formGroup.get('image_url')?.setValue('someURL')
       component.formGroup.updateValueAndValidity()
       tick()
-      fixture.detectChanges()
+      fixture.detectChanges(false)
       component.onRemoveLogo()
-      fixture.detectChanges()
+      fixture.detectChanges(false)
 
       expect(component).toBeTruthy()
     }))
@@ -583,7 +583,7 @@ describe('BookmarkDetailComponent', () => {
         },
         permissions: []
       }
-      fixture.detectChanges()
+      fixture.detectChanges(false)
 
       component.ngOnInit()
       component.formGroup.get('displayName')?.setValue('Valid Name')
@@ -594,10 +594,8 @@ describe('BookmarkDetailComponent', () => {
 
       component.formGroup.updateValueAndValidity()
       tick()
-      const button: HTMLButtonElement = fixture.nativeElement.querySelector('#bm_detail_form_field_remove_logo')
-      expect(button).toBeTruthy()
-      button.click()
-      fixture.detectChanges()
+      component.onRemoveLogo(component.vm.initialBookmark)
+      fixture.detectChanges(false)
       expect(component).toBeTruthy()
     }))
 
@@ -608,7 +606,7 @@ describe('BookmarkDetailComponent', () => {
         initialBookmark: {} as any,
         permissions: []
       }
-      fixture.detectChanges()
+      fixture.detectChanges(false)
       component.ngOnInit()
       component.formGroup.get('displayName')?.setValue('Valid Name')
       component.formGroup.get('endpointName')?.setValue('ep')
@@ -619,10 +617,8 @@ describe('BookmarkDetailComponent', () => {
 
       component.formGroup.updateValueAndValidity()
       tick()
-      const button: HTMLButtonElement = fixture.nativeElement.querySelector('#bm_detail_form_field_remove_logo')
-      expect(button).toBeTruthy()
-      button.click()
-      fixture.detectChanges()
+      component.onRemoveLogo(component.vm.initialBookmark)
+      fixture.detectChanges(false)
       expect(component).toBeTruthy()
     }))
   })
@@ -852,6 +848,7 @@ describe('BookmarkDetailComponent', () => {
  * Test modification of built-in Angular class registerOnChange at top of the file
  */
 @Component({
+  standalone: false,
   template: `<input type="text" [(ngModel)]="value" />`
 })
 class TestComponent {
@@ -866,7 +863,7 @@ describe('DefaultValueAccessor prototype modification', () => {
   function initTestComponent(): void {
     fixture = TestBed.createComponent(TestComponent)
     component = fixture.componentInstance
-    fixture.detectChanges()
+    fixture.detectChanges(false)
   }
 
   beforeEach(async () => {

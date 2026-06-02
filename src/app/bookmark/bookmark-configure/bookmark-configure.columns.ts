@@ -1,6 +1,11 @@
-import { Column } from '@onecx/portal-integration-angular'
+type BookmarkColumn = {
+  field: string
+  header: string
+  active: boolean
+  translationPrefix: string
+}
 
-export type ExtendedColumn = Column & {
+export type ExtendedColumn = BookmarkColumn & {
   hasFilter?: boolean
   isDate?: boolean
   isDropdown?: boolean

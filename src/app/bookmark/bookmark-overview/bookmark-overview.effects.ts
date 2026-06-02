@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core'
 import { Actions, createEffect, ofType } from '@ngrx/effects'
 import { ActivatedRoute, Router } from '@angular/router'
 import { Action } from '@ngrx/store'
-import { catchError, map, mergeMap, of, tap, withLatestFrom } from 'rxjs'
+import { catchError, from, map, mergeMap, of, switchMap, tap, withLatestFrom } from 'rxjs'
 
 import { AppStateService, PortalMessageService, UserService } from '@onecx/angular-integration-interface'
 
@@ -47,22 +47,26 @@ export class BookmarkOverviewEffects {
    */
   private performSearch(workspaceName: string) {
     this.context = 'BOOKMARKS'
-    let criteria: BookmarkSearchCriteria = { workspaceName: workspaceName }
-    // Normal user must see only his own bookmarks
-    if (!this.user.hasPermission('BOOKMARK#ADMIN_EDIT')) criteria = { ...criteria, scope: BookmarkScope.Private }
-    return this.bookmarksService.searchBookmarksByCriteria({ bookmarkSearchCriteria: criteria }).pipe(
-      map(({ stream, totalElements }) =>
-        BookmarkOverviewActions.bookmarkSearchResultsReceived({
-          results: stream?.sort(this.sortByPosition) ?? [],
-          totalNumberOfResults: totalElements ?? 0
-        })
-      ),
-      catchError((error) => {
-        return of(
-          BookmarkOverviewActions.bookmarkSearchFailed({
-            status: error.status,
-            errorText: error.message,
-            exceptionKey: this.buildExceptionKey(error.status)
+    return from(Promise.resolve(this.user.hasPermission('BOOKMARK#ADMIN_EDIT'))).pipe(
+      switchMap((isAdminEdit) => {
+        const criteria: BookmarkSearchCriteria = isAdminEdit
+          ? { workspaceName: workspaceName }
+          : { workspaceName: workspaceName, scope: BookmarkScope.Private }
+        return this.bookmarksService.searchBookmarksByCriteria({ bookmarkSearchCriteria: criteria }).pipe(
+          map(({ stream, totalElements }) =>
+            BookmarkOverviewActions.bookmarkSearchResultsReceived({
+              results: stream?.sort(this.sortByPosition) ?? [],
+              totalNumberOfResults: totalElements ?? 0
+            })
+          ),
+          catchError((error) => {
+            return of(
+              BookmarkOverviewActions.bookmarkSearchFailed({
+                status: error.status,
+                errorText: error.message,
+                exceptionKey: this.buildExceptionKey(error.status)
+              })
+            )
           })
         )
       })

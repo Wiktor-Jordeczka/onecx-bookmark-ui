@@ -1,3 +1,4 @@
+import { AngularAcceleratorModule } from '@onecx/angular-accelerator'
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { ComponentFixture, TestBed } from '@angular/core/testing'
 import { NO_ERRORS_SCHEMA } from '@angular/core'
@@ -13,7 +14,6 @@ import { ofType } from '@ngrx/effects'
 import { AppStateService, UserService } from '@onecx/angular-integration-interface'
 import { AppStateServiceMock, provideAppStateServiceMock } from '@onecx/angular-integration-interface/mocks'
 import { SlotService } from '@onecx/angular-remote-components'
-import { PortalCoreModule } from '@onecx/portal-integration-angular'
 
 import { BookmarkOverviewComponent } from './bookmark-overview.component'
 import { BookmarkOverviewActions } from './bookmark-overview.actions'
@@ -47,7 +47,7 @@ describe('BookmarkOverviewComponent', () => {
       schemas: [NO_ERRORS_SCHEMA],
       imports: [
         StoreModule.forRoot({}),
-        PortalCoreModule,
+        AngularAcceleratorModule,
         TranslateTestingModule.withTranslations({
           de: require('./src/assets/i18n/de.json'),
           en: require('./src/assets/i18n/en.json')
@@ -87,7 +87,7 @@ describe('BookmarkOverviewComponent', () => {
     userServiceMock = TestBed.inject(UserService) as unknown as jest.Mocked<
       Pick<UserService, 'hasPermission' | 'profile$'>
     >
-    userServiceMock.hasPermission = jest.fn().mockReturnValue(true)
+    userServiceMock.hasPermission = jest.fn().mockResolvedValue(true)
 
     fixture = TestBed.createComponent(BookmarkOverviewComponent)
     component = fixture.componentInstance
@@ -108,7 +108,7 @@ describe('BookmarkOverviewComponent', () => {
     })
 
     it('should fall back to ADMIN_EDIT permission when EDIT permission returns null', () => {
-      userServiceMock.hasPermission = jest.fn().mockReturnValueOnce(null).mockReturnValueOnce(false)
+      userServiceMock.hasPermission = jest.fn().mockResolvedValueOnce(null).mockResolvedValueOnce(false)
       const newFixture = TestBed.createComponent(BookmarkOverviewComponent)
       expect(newFixture.componentInstance.hasEditPermissions).toBe(false)
     })

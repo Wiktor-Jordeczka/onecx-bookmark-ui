@@ -9,7 +9,7 @@ import { FileUploadModule } from 'primeng/fileupload'
 import { FloatLabelModule } from 'primeng/floatlabel'
 import { InputGroupModule } from 'primeng/inputgroup'
 import { InputTextModule } from 'primeng/inputtext'
-import { InputTextareaModule } from 'primeng/inputtextarea'
+import { TextareaModule } from 'primeng/textarea'
 import { OrderListModule } from 'primeng/orderlist'
 import { RadioButtonModule } from 'primeng/radiobutton'
 import { RippleModule } from 'primeng/ripple'
@@ -29,7 +29,7 @@ import { LabelResolver } from 'src/app/shared/utils/label.resolver'
     FormsModule,
     InputGroupModule,
     InputTextModule,
-    InputTextareaModule,
+    TextareaModule,
     OrderListModule,
     RadioButtonModule,
     ReactiveFormsModule,
@@ -47,7 +47,7 @@ import { LabelResolver } from 'src/app/shared/utils/label.resolver'
     FormsModule,
     InputGroupModule,
     InputTextModule,
-    InputTextareaModule,
+    TextareaModule,
     OrderListModule,
     RadioButtonModule,
     ReactiveFormsModule,

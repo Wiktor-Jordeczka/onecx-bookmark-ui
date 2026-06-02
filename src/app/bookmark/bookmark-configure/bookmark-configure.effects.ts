@@ -2,11 +2,11 @@ import { Injectable } from '@angular/core'
 import { Actions, createEffect, ofType } from '@ngrx/effects'
 import { concatLatestFrom } from '@ngrx/operators'
 import { Action, Store } from '@ngrx/store'
-import { catchError, map, mergeMap, of, switchMap, tap, withLatestFrom } from 'rxjs'
+import { catchError, from, map, mergeMap, of, switchMap, tap, withLatestFrom } from 'rxjs'
 import FileSaver from 'file-saver'
 
 import { AppStateService, PortalMessageService, UserService } from '@onecx/angular-integration-interface'
-import { DialogState, PortalDialogService } from '@onecx/portal-integration-angular'
+import { DialogState, PortalDialogService } from '@onecx/angular-accelerator'
 
 import * as actton from 'src/app/shared/utils/actionButtons'
 import {
@@ -96,22 +96,26 @@ export class BookmarkConfigureEffects {
    */
   private performSearch(workspaceName: string) {
     this.context = 'BOOKMARKS'
-    let criteria: BookmarkSearchCriteria = { workspaceName: workspaceName }
-    // Normal user must see only his own bookmarks
-    if (!this.user.hasPermission('BOOKMARK#ADMIN_EDIT')) criteria = { ...criteria, scope: BookmarkScope.Private }
-    return this.bookmarksService.searchBookmarksByCriteria({ bookmarkSearchCriteria: criteria }).pipe(
-      map(({ stream, totalElements }) =>
-        BookmarkConfigureActions.bookmarkSearchResultsReceived({
-          results: stream?.sort(this.sortByPosition) ?? [],
-          totalNumberOfResults: totalElements ?? 0
-        })
-      ),
-      catchError((error) => {
-        return of(
-          BookmarkConfigureActions.bookmarkSearchFailed({
-            status: error.status,
-            errorText: error.message,
-            exceptionKey: this.buildExceptionKey(error.status)
+    return from(Promise.resolve(this.user.hasPermission('BOOKMARK#ADMIN_EDIT'))).pipe(
+      switchMap((isAdminEdit) => {
+        const criteria: BookmarkSearchCriteria = isAdminEdit
+          ? { workspaceName: workspaceName }
+          : { workspaceName: workspaceName, scope: BookmarkScope.Private }
+        return this.bookmarksService.searchBookmarksByCriteria({ bookmarkSearchCriteria: criteria }).pipe(
+          map(({ stream, totalElements }) =>
+            BookmarkConfigureActions.bookmarkSearchResultsReceived({
+              results: stream?.sort(this.sortByPosition) ?? [],
+              totalNumberOfResults: totalElements ?? 0
+            })
+          ),
+          catchError((error) => {
+            return of(
+              BookmarkConfigureActions.bookmarkSearchFailed({
+                status: error.status,
+                errorText: error.message,
+                exceptionKey: this.buildExceptionKey(error.status)
+              })
+            )
           })
         )
       })
@@ -135,25 +139,29 @@ export class BookmarkConfigureEffects {
       mergeMap((data) => {
         // no bookmarks to be exported
         if (!data.exist) return of({ button: 'secondary' } as DialogState<ExportBookmarksRequest | undefined>)
-        // no ADMIN permission: export PRIVATE bookmarks only
-        if (!this.user.hasPermission('BOOKMARK#ADMIN_EDIT'))
-          return of({
-            button: 'primary',
-            result: { workspaceName: data.workspaceName, scopes: [EximBookmarkScope.Private] }
-          } as DialogState<ExportBookmarksRequest>)
-        // any other cases: ADMIN user select scopes
-        return this.portalDialogService.openDialog<ExportBookmarksRequest | undefined>(
-          'BOOKMARK_EXPORT.HEADER',
-          { type: BookmarkExportComponent, inputs: { workspaceName: data.workspaceName } },
-          actton.exportButton,
-          actton.cancelButton,
-          {
-            modal: true,
-            draggable: true,
-            resizable: true,
-            width: '400px',
-            autoFocusButton: 'secondary'
-          }
+        return from(Promise.resolve(this.user.hasPermission('BOOKMARK#ADMIN_EDIT'))).pipe(
+          mergeMap((isAdminEdit) => {
+            // no ADMIN permission: export PRIVATE bookmarks only
+            if (!isAdminEdit)
+              return of({
+                button: 'primary',
+                result: { workspaceName: data.workspaceName, scopes: [EximBookmarkScope.Private] }
+              } as DialogState<ExportBookmarksRequest>)
+            // any other cases: ADMIN user select scopes
+            return this.portalDialogService.openDialog<ExportBookmarksRequest | undefined>(
+              'BOOKMARK_EXPORT.HEADER',
+              { type: BookmarkExportComponent, inputs: { workspaceName: data.workspaceName } },
+              actton.exportButton,
+              actton.cancelButton,
+              {
+                modal: true,
+                draggable: true,
+                resizable: true,
+                width: '400px',
+                autoFocusButton: 'secondary'
+              }
+            )
+          })
         )
       }),
       switchMap((dialogResult) => {
@@ -337,12 +345,6 @@ export class BookmarkConfigureEffects {
    */
   viewOrEditBookmark$ = createEffect(() => {
     this.context = 'BOOKMARK'
-    const canEdit = (bookmark?: CombinedBookmark) => {
-      return (
-        (this.user.hasPermission('BOOKMARK#EDIT') && bookmark?.scope === BookmarkScope.Private) ||
-        (this.user.hasPermission('BOOKMARK#ADMIN_EDIT') && bookmark?.scope === BookmarkScope.Public)
-      )
-    }
     return this.actions$.pipe(
       ofType(BookmarkConfigureActions.viewOrEditBookmark),
       withLatestFrom(
@@ -360,59 +362,73 @@ export class BookmarkConfigureEffects {
         }
       }),
       mergeMap((data) => {
-        const editable = canEdit(data.bookmark)
-        return this.portalDialogService.openDialog<CombinedBookmark | undefined>(
-          `DIALOG.DETAIL.${editable ? 'EDIT' : 'VIEW'}.HEADER`,
-          {
-            type: BookmarkDetailComponent,
-            inputs: {
-              workspaceName: data.workspaceName,
-              dateFormat: this.dateFormat(data.lang),
-              userId: data.userId,
-              editable: editable,
-              vm: { initialBookmark: data.bookmark, changeMode: editable ? 'EDIT' : 'VIEW' }
-            }
-          },
-          editable ? actton.saveButton : actton.closeButton,
-          editable ? actton.cancelButton : undefined,
-          {
-            modal: true,
-            draggable: true,
-            resizable: true,
-            width: '600px',
-            autoFocusButton: 'secondary'
-          }
+        return from(this.canEditBookmark(data.bookmark)).pipe(
+          mergeMap((editable) => {
+            return this.portalDialogService.openDialog<CombinedBookmark | undefined>(
+              `DIALOG.DETAIL.${editable ? 'EDIT' : 'VIEW'}.HEADER`,
+              {
+                type: BookmarkDetailComponent,
+                inputs: {
+                  workspaceName: data.workspaceName,
+                  dateFormat: this.dateFormat(data.lang),
+                  userId: data.userId,
+                  editable: editable,
+                  vm: { initialBookmark: data.bookmark, changeMode: editable ? 'EDIT' : 'VIEW' }
+                }
+              },
+              editable ? actton.saveButton : actton.closeButton,
+              editable ? actton.cancelButton : undefined,
+              {
+                modal: true,
+                draggable: true,
+                resizable: true,
+                width: '600px',
+                autoFocusButton: 'secondary'
+              }
+            )
+          })
         )
       }),
       switchMap((dialogResult) => {
-        if (
-          !dialogResult ||
-          (dialogResult.button === 'secondary' && canEdit(dialogResult.result)) ||
-          (dialogResult.button === 'primary' && !canEdit(dialogResult.result))
-        ) {
-          return of(BookmarkConfigureActions.editBookmarkCancelled())
-        }
-        if (!dialogResult.result) {
-          throw new Error('VALIDATION.ERRORS.RESULT_WRONG') // error message
-        }
-        // execute
-        return this.bookmarksService
-          .updateBookmark({
-            id: (dialogResult.result as Bookmark).id,
-            updateBookmark: dialogResult.result as UpdateBookmark
+        return from(this.canEditBookmark(dialogResult?.result)).pipe(
+          mergeMap((canEditResult) => {
+            if (
+              !dialogResult ||
+              (dialogResult.button === 'secondary' && canEditResult) ||
+              (dialogResult.button === 'primary' && !canEditResult)
+            ) {
+              return of(BookmarkConfigureActions.editBookmarkCancelled())
+            }
+            if (!dialogResult.result) {
+              throw new Error('VALIDATION.ERRORS.RESULT_WRONG') // error message
+            }
+            // execute
+            return this.bookmarksService
+              .updateBookmark({
+                id: (dialogResult.result as Bookmark).id,
+                updateBookmark: dialogResult.result as UpdateBookmark
+              })
+              .pipe(
+                map(() => {
+                  this.messageService.success({ summaryKey: 'BOOKMARK_DETAIL.EDIT.SUCCESS' })
+                  return BookmarkConfigureActions.editBookmarkSucceeded()
+                })
+              )
           })
-          .pipe(
-            map(() => {
-              this.messageService.success({ summaryKey: 'BOOKMARK_DETAIL.EDIT.SUCCESS' })
-              return BookmarkConfigureActions.editBookmarkSucceeded()
-            })
-          )
+        )
       }),
       catchError((error) => {
         return of(BookmarkConfigureActions.editBookmarkFailed({ status: error.status, errorText: error.message }))
       })
     )
   })
+
+  private async canEditBookmark(bookmark?: CombinedBookmark): Promise<boolean> {
+    if (!bookmark?.scope) return false
+    if (bookmark.scope === BookmarkScope.Private) return Promise.resolve(this.user.hasPermission('BOOKMARK#EDIT'))
+    if (bookmark.scope === BookmarkScope.Public) return Promise.resolve(this.user.hasPermission('BOOKMARK#ADMIN_EDIT'))
+    return false
+  }
 
   /**
    * DETAIL => create URL bookmark

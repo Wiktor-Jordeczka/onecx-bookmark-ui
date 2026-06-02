@@ -30,7 +30,8 @@ export type ExtendedSelectItem = SelectItem & { title_key: string }
 @Component({
   selector: 'app-bookmark-configure',
   templateUrl: './bookmark-configure.component.html',
-  styleUrls: ['./bookmark-configure.component.scss']
+  styleUrls: ['./bookmark-configure.component.scss'],
+  standalone: false
 })
 export class BookmarkConfigureComponent implements OnInit {
   // data
@@ -47,6 +48,10 @@ export class BookmarkConfigureComponent implements OnInit {
   public bookmarkColumns = bookmarkColumns
   public limitText = limitText
   public editable = false
+  private canEditPrivate = false
+  private canEditPublic = false
+  private canDeletePrivate = false
+  private canDeletePublic = false
   public quickFilterItems$: Observable<SelectItem[]> | undefined
 
   @ViewChild('dataTable', { static: false }) dataTable: Table | undefined
@@ -65,7 +70,6 @@ export class BookmarkConfigureComponent implements OnInit {
     private readonly translate: TranslateService,
     private readonly workspaceService: WorkspaceService
   ) {
-    this.editable = this.user.hasPermission('BOOKMARK#EDIT') || this.user.hasPermission('BOOKMARK#ADMIN_EDIT')
     this.filteredColumns = bookmarkColumns.filter((a) => a.active === true)
     this.syncInteractiveColumns()
     this.viewModel$.subscribe({
@@ -77,6 +81,7 @@ export class BookmarkConfigureComponent implements OnInit {
   }
 
   public ngOnInit() {
+    void this.loadPermissions()
     this.onSearch()
   }
 
@@ -85,14 +90,13 @@ export class BookmarkConfigureComponent implements OnInit {
    */
   public canEdit(scope: BookmarkScope): boolean {
     return (
-      (scope === BookmarkScope.Public && this.user.hasPermission('BOOKMARK#ADMIN_EDIT')) ||
-      (scope === BookmarkScope.Private && this.user.hasPermission('BOOKMARK#EDIT'))
+      (scope === BookmarkScope.Public && this.canEditPublic) || (scope === BookmarkScope.Private && this.canEditPrivate)
     )
   }
   public canDelete(scope: BookmarkScope): boolean {
     return (
-      (scope === BookmarkScope.Public && this.user.hasPermission('BOOKMARK#ADMIN_DELETE')) ||
-      (scope === BookmarkScope.Private && this.user.hasPermission('BOOKMARK#DELETE'))
+      (scope === BookmarkScope.Public && this.canDeletePublic) ||
+      (scope === BookmarkScope.Private && this.canDeletePrivate)
     )
   }
 
@@ -236,5 +240,19 @@ export class BookmarkConfigureComponent implements OnInit {
       filterable: !!column.hasFilter
     }))
     this.displayedColumnKeys = this.interactiveColumns.map((column) => column.id)
+  }
+
+  private async loadPermissions(): Promise<void> {
+    const [editPrivate, editPublic, deletePrivate, deletePublic] = await Promise.all([
+      this.user.hasPermission('BOOKMARK#EDIT'),
+      this.user.hasPermission('BOOKMARK#ADMIN_EDIT'),
+      this.user.hasPermission('BOOKMARK#DELETE'),
+      this.user.hasPermission('BOOKMARK#ADMIN_DELETE')
+    ])
+    this.canEditPrivate = editPrivate
+    this.canEditPublic = editPublic
+    this.canDeletePrivate = deletePrivate
+    this.canDeletePublic = deletePublic
+    this.editable = this.canEditPrivate || this.canEditPublic
   }
 }

@@ -6,11 +6,17 @@ import { TranslateLoader, MissingTranslationHandler } from '@ngx-translate/core'
 
 import { AngularAuthModule } from '@onecx/angular-auth'
 import { bootstrapRemoteComponent } from '@onecx/angular-webcomponents'
-import { providePortalDialogService } from '@onecx/portal-integration-angular'
+import { providePortalDialogService } from '@onecx/angular-accelerator'
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations'
-import { provideTranslationPathFromMeta, createTranslateLoader } from '@onecx/angular-utils'
+import {
+  providePermissionService,
+  provideTranslationPathFromMeta,
+  createTranslateLoader,
+  provideThemeConfig
+} from '@onecx/angular-utils'
 import { provideTranslateServiceForRoot } from '@onecx/angular-remote-components'
 import { AngularAcceleratorMissingTranslationHandler } from '@onecx/angular-accelerator'
+import { providePrimeNG } from 'primeng/config'
 
 import { environment } from 'src/environments/environment'
 import { OneCXManageBookmarkComponent } from './manage-bookmark.component'
@@ -18,6 +24,9 @@ import { OneCXManageBookmarkComponent } from './manage-bookmark.component'
 bootstrapRemoteComponent(OneCXManageBookmarkComponent, 'ocx-bookmark-manage-component', environment.production, [
   provideHttpClient(withInterceptorsFromDi()),
   providePortalDialogService(),
+  provideThemeConfig(),
+  providePermissionService(),
+  providePrimeNG({ ripple: true }),
   importProvidersFrom(AngularAuthModule, BrowserModule, BrowserAnimationsModule),
   provideRouter([
     {
